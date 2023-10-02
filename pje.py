@@ -1,7 +1,7 @@
 import pandas as pd
 import re
 import streamlit as st
-
+from collections import Counter
 
 class Application:
     def __init__(self):
@@ -29,13 +29,21 @@ class Application:
     print("--------- process the data ----------- ")
 
     def cleanDataFrame(self):
-        oldColumns = self.dataFrame.columns # her, we have the information about the first row, pandas put it as a column
-        self.dataFrame.columns = ['target','Ids','date','flag','user','text'] # renaming old columns 
-        self.dataFrame.loc[len(self.dataFrame.index)] = oldColumns  # put the old column (first row) at the last row
-        self.dataFrame.drop_duplicates(subset=["text"],inplace = True)
+        oldColumns = self.dataFrame.columns
+        self.dataFrame['text'] = self.dataFrame[self.dataFrame.columns[5:]].apply(lambda row: ' '.join(row.dropna().astype(str)), axis=1)
+        
+        excess_columns = oldColumns[5:]
+        self.dataFrame = self.dataFrame.drop(excess_columns, axis=1)
+        
+        self.dataFrame.columns = ['target', 'Ids', 'date', 'flag', 'user', 'text']
+        self.dataFrame = self.dataFrame[:-1]
+        self.dataFrame.drop_duplicates(subset=["text"], inplace=True)
+        
+        columns_to_drop = ['Ids', 'date', 'flag', 'user']
+        self.dataFrame = self.dataFrame.drop(columns_to_drop, axis=1)
+        
         self.processCleaning(self.dataFrame)
         st.write(self.dataFrame.head())
-    
 
     def removeSpecialCaractere(self,text):
         indice = 1
@@ -84,13 +92,13 @@ class Application:
         algoButton = st.sidebar.button("apply Algorithm ? ")
         if algoButton :
             if self.SupervisedAlgorithm == "**Dictionnary**":
-                st.write(self.automaticAnnotation(self.dataFrame).head())
-                st.text_area(':orange[**Observation**]🕵️‍♂️: ', "")
-                st.write(self.dataFrame['polarity'].sum())
+                st.write(self.dictionnary(self.dataFrame).head())
+            elif self.SupervisedAlgorithm == "**KNN**":
+                st.write(self.knn(self.dataFrame,1))
         else:
             None
 
-    def automaticAnnotation(self,dataFrame):
+    def dictionnary(self,dataFrame):
         filePositive = self.openFile('positive.txt')
         fileNegative = self.openFile('negative.txt')
         countPositiveWord = 0
@@ -112,9 +120,45 @@ class Application:
                 dataFrame.at[i,'polarity'] = 0
             countPositiveWord = 0
             countNegativeWord = 0
-        return dataFrame[["target","text","polarity"]]   
+        return dataFrame[["target","text","polarity"]]
+    
+    def calculate_distance(self,tweet1, tweet2):
+        words1 = set(tweet1.split())
+        words2 = set(tweet2.split())
+        
+        # Nombre de mots en commun
+        common_words = len(words1.intersection(words2))
+        
+        # Nombre total de mots dans les deux tweets
+        total_words = len(words1) + len(words2)
+        
+        # Calcul de la distance
+        distance = 1 - (common_words / total_words)
+        
+        return distance
 
-    print("   ------------ End Automatic annotation ------------  ") 
+    # Fonction pour prédire la polarité d'un tweet en utilisant KNN
+    def knn_predict(self, tweet,dataFrame, k):
+        distances = []
+        for index, row in dataFrame.iterrows():
+            if row['target'] in [0, 2, 4]:
+                distance = self.calculate_distance(tweet, row['text'])
+                distances.append((row['target'], distance))
+        
+        distances.sort(key=lambda x: x[1])  # Tri par distance croissante
+        print(distances)
+        neighbors = distances[:k]  # Sélection des k plus proches voisins
+        target_counts = Counter([neighbor[0] for neighbor in neighbors])
+        most_common_target = max(target_counts, key=lambda key: (target_counts[key], key), default=None)
+        return most_common_target
+
+    def knn(self,dataFrame, k):
+        dataFrame['target'] = dataFrame.apply(lambda row: self.knn_predict(row['text'], dataFrame, k) if row['target'] == -1 else row['target'], axis=1)  
+        return dataFrame
+        
+        
+
+    print("  ------------ End Automatic annotation ------------  ") 
                    
 
 
