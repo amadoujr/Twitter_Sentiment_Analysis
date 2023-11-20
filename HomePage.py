@@ -132,10 +132,20 @@ class Application:
                     ("Presence", "Frequence","four words minimum (ignoring words less than 3 caracteres)"),
                 )
                 Bayes_Instance = Bayes(st.session_state.trainingData,option)
-                if st.button(" Apply Bayes algorithme ") :
-                    with st.spinner("In progress...⏳"):
-                        st.session_state.testData = Bayes_Instance.predict(st.session_state.testData)
-                        st.write(st.session_state.testData)
+                if option not in ("Presence","Frequence"):
+                    checkbox = st.radio("choose between uni-gramme and bi-gramme approach",
+                                    ["**uni-gramme**","**bi-gramme**"],
+                                    captions = ["Simple word 1️⃣.", "Two consecutive words 2️⃣."])
+                    if st.button("applying " + checkbox + " variety") :
+                        with st.spinner("In progress...⏳"):
+                            st.session_state.testData = Bayes_Instance.predict(st.session_state.testData,combinaison=checkbox)
+                            st.write(st.session_state.testData)
+                if option in ("Presence","Frequence"):
+                    if st.button(" Apply Bayes algorithme ") :
+                        with st.spinner("In progress...⏳"):
+                            st.session_state.testData = Bayes_Instance.predict(st.session_state.testData)
+                            st.write(st.session_state.testData)
+                
 
 
 if __name__ == '__main__':
