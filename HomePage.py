@@ -4,10 +4,12 @@ import pandas as pd
 import re
 from sklearn.model_selection import train_test_split
 import streamlit as st
+import plotly.express as px
 from algos.Dictionnary_method import Dictionnary
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from algos.KNN_method import Knn_Algo
 from algos.Bayes_method import Bayes
+from algos.Cross_validation import Cross_Validation
 
 st.set_page_config(
     page_title="Tweets Feelings App",
@@ -109,19 +111,39 @@ class Application:
                     ("Default", "Cosine-Similarity","Jaccard"),
                 )
                 distance =  option
-                Knn_Instance = Knn_Algo()
-                if st.button(" apply algo ") :
-                    with st.spinner("Applying KNN algorithm..."):
-                        st.session_state.testData = Knn_Instance.predict(st.session_state.trainingData,st.session_state.testData,3,distance)
-                        #st.write(st.session_state.testData)
-                if st.button("evaluate the model"):
+                Knn_Instance = Knn_Algo(st.session_state.trainingData,3,distance)
+                st.write("applying KNN algorithm with those parameters: {} **distance** , **neighbors** : {} ".format(distance,3))
+                if st.button(":rainbow[predict🔮]") :
+                    with st.spinner("In progress..."):
+                        st.session_state.testData = Knn_Instance.predict(st.session_state.testData[:200])
+                        st.write(st.session_state.testData)
+                st.write(":red[**Experimentation**]👨‍🔬 :")
+                st.write("we wiil use two differentes methods to evaluate our model : **Matrix Confusion** and **Cross Validation**" + "/n"+
+                        "you can choose on of them here:")
+                if st.button("Model selection and evaluation for KNN"):
                     X_train,X_test= train_test_split(st.session_state.trainingData,test_size=1/3)
-                    with st.spinner("Applying KNN algorithm..."):
-                        for k in range(1,8):
-                            testData= Knn_Instance.predict(X_train,X_test,k,distance)
-                            accuracy = Knn_Instance.accuracy_knn(testData.target_algorithm, X_test.target)
-                            st.write("matrice de confusion", confusion_matrix(pd.to_numeric(X_test["target"].tolist()),pd.to_numeric(testData["target_algorithm"]).tolist()))
-                            st.write(f"Exactitude du modèle KNN : {accuracy:.2%}")
+                    Bayes_Test = Knn_Algo(X_train,3,distance)
+                    testData= Bayes_Test.predict(X_test)
+                    accuracy = Bayes_Test.accuracy_knn(testData.target_algorithm, X_test.target)
+                    class_labels = ["Negative", "Neutral", "Positive"]
+                    conf_matrix  = confusion_matrix(pd.to_numeric(X_test["target"].tolist()),pd.to_numeric(testData["target_algorithm"]).tolist())
+                    # Display the confusion matrix using ConfusionMatrixDisplay
+                    fig = px.imshow(
+                        conf_matrix,
+                        x=class_labels,
+                        y=class_labels,
+                        labels=dict(x="Predicted", y="Actual"),
+                        color_continuous_scale="Blues"
+                    )
+                    tab1, tab2 = st.tabs(["Cross validation", "K-fold"])
+                    with tab1:
+                        st.plotly_chart(fig)
+                        st.write(f"Exactitude de notre modèle KNN : {accuracy:.2%}")
+                    with tab2:
+                        kfold = Cross_Validation()
+                        kfold.k_fold(Knn_Instance,st.session_state.trainingData,5)
+                        
+
         with self.Bayes_Algo:
             if st.session_state.trainingData is not None  and st.session_state.testData is not None:
                 st.header("***in this Section, we will apply the Naives Bayes algorithm to classify tweets***")
@@ -129,23 +151,45 @@ class Application:
                         "theorem with the “naive” assumption of conditional independence between every pair of features")
                 option = st.selectbox(
                     "In order to test the model we have added a few variants. You can choose one of theme by ticking the corresponding case",
-                    ("Presence", "Frequence","four words minimum (ignoring words less than 3 caracteres)"),
+                    ("Presence", "Frequence"),
                 )
-                Bayes_Instance = Bayes(st.session_state.trainingData,option)
-                if option not in ("Presence","Frequence"):
-                    checkbox = st.radio("choose between uni-gramme and bi-gramme approach",
-                                    ["**uni-gramme**","**bi-gramme**"],
-                                    captions = ["Simple word 1️⃣.", "Two consecutive words 2️⃣."])
-                    if st.button("applying " + checkbox + " variety") :
-                        with st.spinner("In progress...⏳"):
-                            st.session_state.testData = Bayes_Instance.predict(st.session_state.testData,combinaison=checkbox)
-                            st.write(st.session_state.testData)
-                if option in ("Presence","Frequence"):
-                    if st.button(" Apply Bayes algorithme ") :
+                col1,col2 = st.columns(2)
+                checkbox1 = col1.radio("choose between these 👇:",
+                                ["**Important word**","**Without**"],
+                                captions = ["minimum 3 letters.", "any kind of words"])
+                    
+                checkbox2 = col2.radio("choose between uni-gramme and bi-gramme approach",
+                                ["**uni-gramme**","**bi-gramme**"],
+                                captions = ["Simple word 1️⃣.", "Two consecutive words 2️⃣."])
+                  
+                Bayes_Instance = Bayes(st.session_state.trainingData,option,checkbox1,checkbox2)
+                if st.button("applying bayes with: **{}**, {}, {}  variety".format(option,checkbox1,checkbox2)):
                         with st.spinner("In progress...⏳"):
                             st.session_state.testData = Bayes_Instance.predict(st.session_state.testData)
                             st.write(st.session_state.testData)
-                
+                if st.button("Model selection and evaluation for Bayes"):
+                    X_train_bayes,X_test_bayes= train_test_split(st.session_state.trainingData,test_size=1/3)
+                    Bayes_Test = Bayes(X_train_bayes,option,checkbox1,checkbox2)
+                    Xb_pred = Bayes_Test.predict(X_test_bayes)                    
+                    Bayes_accuracy = Bayes_Test.accuracy_Bayes(X_test_bayes.target_algorithm, Xb_pred.target)
+                    class_labels = ["Negative", "Neutral", "Positive"]
+                    conf_matrix  = confusion_matrix(pd.to_numeric(X_test_bayes["target"].tolist()),pd.to_numeric(Xb_pred["target_algorithm"]).tolist())
+                    # Display the confusion matrix using ConfusionMatrixDisplay
+                    fig = px.imshow(
+                        conf_matrix,
+                        x=class_labels,
+                        y=class_labels,
+                        labels=dict(x="Predicted", y="Actual"),
+                        color_continuous_scale="Blues"
+                    )
+                    tab1, tab2 = st.tabs(["Cross validation", "K-fold"])
+                    with tab1:
+                        st.plotly_chart(fig)
+                        st.write(f"Exactitude de notre modèle KNN : {Bayes_accuracy:.2%}")
+                    with tab2:
+                        kfold = Cross_Validation()
+                        kfold.k_fold(Bayes_Instance,st.session_state.trainingData,5)
+                        
 
 
 if __name__ == '__main__':
