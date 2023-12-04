@@ -2,6 +2,8 @@
 import pandas as pd
 import numpy as np
 import streamlit as st
+from sklearn.utils import shuffle
+
 
 class Cross_Validation:
     def __init__(self):
@@ -10,9 +12,9 @@ class Cross_Validation:
     def divideDataframe(self,longueur,dataFrame):
         l = []
         taille = dataFrame.shape[0]
+        df = shuffle(dataFrame)
         for i in range(longueur):
-            dataFrame.sample(frac=1,replace=True)
-            l.append(dataFrame.iloc[i*(taille//longueur):(i+1)*(taille//longueur)])
+            l.append(df.iloc[i*(taille//longueur):(i+1)*(taille//longueur)])
         return l
     
     def combineDataFrame(self,liste):
