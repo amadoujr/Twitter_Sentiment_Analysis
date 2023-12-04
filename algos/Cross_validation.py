@@ -36,7 +36,7 @@ class Cross_Validation:
             x_valid = datasets[i].copy()
             X_test = model.predict(x_valid)
             st.write("x_test",X_test)
-            score = self.calcul_score(X_test["target"],X_test["target_algorithm"])
+            score = self.calcul_score(X_test["target"],X_test["pred_target"])
             st.write('score',score)
             model.X_train = df.copy()
             scores.append(score)
