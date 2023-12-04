@@ -17,7 +17,7 @@ class Dictionnary:
         fileNegative = self.openFile('negative.txt')
         countPositiveWord = 0
         countNegativeWord = 0
-        dataFrame['polarity'] = -1
+        dataFrame['pred_target'] = -1
             
         for i, tweet in enumerate(dataFrame['text']):
             res = tweet.split(' ')
@@ -27,14 +27,14 @@ class Dictionnary:
                 elif word in fileNegative:
                     countNegativeWord+=1
             if countPositiveWord > countNegativeWord:
-                dataFrame.at[i,'polarity'] = 4
+                dataFrame.at[i,'pred_target'] = 4
             elif countPositiveWord < countNegativeWord:
-                dataFrame.at[i,'polarity'] = 2
+                dataFrame.at[i,'pred_target'] = 2
             else:
-                dataFrame.at[i,'polarity'] = 0
+                dataFrame.at[i,'pred_target'] = 0
             countPositiveWord = 0
             countNegativeWord = 0
-        return dataFrame[["target","text","polarity"]]  
+        return dataFrame[["target","text","pred_target"]]  
      
 if __name__ == "__main__":
     app = Dictionnary()

@@ -6,10 +6,11 @@ from sklearn.model_selection import train_test_split
 import streamlit as st
 import plotly.express as px
 from algos.Dictionnary_method import Dictionnary
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import confusion_matrix
 from algos.KNN_method import Knn_Algo
 from algos.Bayes_method import Bayes
 from algos.Cross_validation import Cross_Validation
+import numpy as np
 
 st.set_page_config(
     page_title="Tweets Feelings App",
@@ -102,6 +103,31 @@ class Application:
                 col4.write(st.session_state.testData.head())
                 st.info(" :red[NB:] We just decide to drop ['Ids','date','flag','user'] columns because they doesn't serve here." )
 
+        with self.Dico_Algo:
+            if st.session_state.trainingData is not None  and st.session_state.testData is not None:
+                st.header("***in this Section, we will apply the Automatic annotation algorithm to classify tweets***")
+                st.write("A tweet will be considered positive if it contains more positive corpus words than negative ones. Similarly, it "+"\n"+
+                "negative if it contains more negative corpus words than positive. If it contains no positive or negative words, or as many positive as negative words, it will be neutral.")
+                Dico_Instance = Dictionnary()
+                st.write("Click here to see prediction👇 :")
+                if st.button(":rainbow[automatic prediction]") :
+                    with st.spinner("In progress..."):
+                        st.session_state.testData = Dico_Instance.automaticAnnotation(st.session_state.testData)
+                        st.write(st.session_state.testData)
+                        accuracy = np.mean(st.session_state.testData.pred_target == st.session_state.testData.target)
+                        st.write(f"Exactitude de notre modèle KNN : {accuracy:.2%}")
+                        class_labels = ["Negative", "Neutral", "Positive"]
+                        conf_matrix  = confusion_matrix(pd.to_numeric(st.session_state.testData["target"].tolist()),pd.to_numeric(st.session_state.testData["pred_target"]).tolist())
+                        fig = px.imshow(
+                            conf_matrix,
+                            x=class_labels,
+                            y=class_labels,
+                            labels=dict(x="Predicted", y="Actual"),
+                            color_continuous_scale="Blues"
+                        )
+                        st.plotly_chart(fig)
+                
+                        
         with self.KNN_Algo:
             if st.session_state.trainingData is not None  and st.session_state.testData is not None:
                 st.header("***in this Section, we will apply the KNN algorithm to classify tweets***")
@@ -124,9 +150,9 @@ class Application:
                     X_train,X_test= train_test_split(st.session_state.trainingData,test_size=1/3)
                     Bayes_Test = Knn_Algo(X_train,3,distance)
                     testData= Bayes_Test.predict(X_test)
-                    accuracy = Bayes_Test.accuracy_knn(testData.target_algorithm, X_test.target)
+                    accuracy = Bayes_Test.accuracy_knn(testData.pred_target, X_test.target)
                     class_labels = ["Negative", "Neutral", "Positive"]
-                    conf_matrix  = confusion_matrix(pd.to_numeric(X_test["target"].tolist()),pd.to_numeric(testData["target_algorithm"]).tolist())
+                    conf_matrix  = confusion_matrix(pd.to_numeric(X_test["target"].tolist()),pd.to_numeric(testData["pred_target"]).tolist())
                     # Display the confusion matrix using ConfusionMatrixDisplay
                     fig = px.imshow(
                         conf_matrix,
@@ -171,9 +197,9 @@ class Application:
                     X_train_bayes,X_test_bayes= train_test_split(st.session_state.trainingData,test_size=1/3)
                     Bayes_Test = Bayes(X_train_bayes,option,checkbox1,checkbox2)
                     Xb_pred = Bayes_Test.predict(X_test_bayes)                    
-                    Bayes_accuracy = Bayes_Test.accuracy_Bayes(X_test_bayes.target_algorithm, Xb_pred.target)
+                    Bayes_accuracy = Bayes_Test.accuracy_Bayes(X_test_bayes.pred_target, Xb_pred.target)
                     class_labels = ["Negative", "Neutral", "Positive"]
-                    conf_matrix  = confusion_matrix(pd.to_numeric(X_test_bayes["target"].tolist()),pd.to_numeric(Xb_pred["target_algorithm"]).tolist())
+                    conf_matrix  = confusion_matrix(pd.to_numeric(X_test_bayes["target"].tolist()),pd.to_numeric(Xb_pred["pred_target"]).tolist())
                     # Display the confusion matrix using ConfusionMatrixDisplay
                     fig = px.imshow(
                         conf_matrix,

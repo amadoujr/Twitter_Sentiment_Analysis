@@ -69,7 +69,7 @@ class Bayes:
         self.getData(self.X_train)
         self.getClassProbability(self.X_train)
         
-        X_test["target_algorithm"] = -1
+        X_test["pred_target"] = -1
         
         for i in X_test.index:
             text = X_test.at[i, "text"]
@@ -83,11 +83,11 @@ class Bayes:
             true_target = max(pos_proba, neg_proba, neut_proba)
             
             if true_target == neg_proba:
-                X_test.at[i, "target_algorithm"] = 0
+                X_test.at[i, "pred_target"] = 0
             elif true_target == pos_proba:
-                X_test.at[i, "target_algorithm"] = 4
+                X_test.at[i, "pred_target"] = 4
             else:
-                X_test.at[i, "target_algorithm"] = 2
+                X_test.at[i, "pred_target"] = 2
 
         return X_test
 

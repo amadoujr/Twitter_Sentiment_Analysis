@@ -69,8 +69,8 @@ class Knn_Algo:
 
     def predict(self,X_test):
         result_list = self.X_train[['target', 'text']].values.tolist()
-        X_test['target_algorithm'] = 0
-        X_test['target_algorithm'] = X_test.apply(lambda row: self.knn_predict(row['text'], result_list), axis=1)
+        X_test['pred_target'] = 0
+        X_test['pred_target'] = X_test.apply(lambda row: self.knn_predict(row['text'], result_list), axis=1)
         #st.write(dataFrameTest)
         return X_test
 
