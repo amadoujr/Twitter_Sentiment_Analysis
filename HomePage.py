@@ -125,10 +125,9 @@ class Application:
                     with st.spinner("In progress..."):
                         st.session_state.testData = Dico_Instance.automaticAnnotation(st.session_state.testData)
                         st.write(st.session_state.testData)
-                        accuracy = np.mean(st.session_state.testData.pred_target == st.session_state.testData.target)
-                        st.write(f"Exactitude de notre modèle KNN : {accuracy:.2%}")
                         class_labels = ["Negative", "Neutral", "Positive"]
                         conf_matrix  = confusion_matrix(pd.to_numeric(st.session_state.testData["target"].tolist()),pd.to_numeric(st.session_state.testData["pred_target"]).tolist())
+                        # Display the confusion matrix using ConfusionMatrixDisplay
                         fig = px.imshow(
                             conf_matrix,
                             x=class_labels,
@@ -148,20 +147,20 @@ class Application:
                     ("Default", "Cosine-Similarity","Jaccard"),
                 )
                 distance =  option
-                Knn_Instance = Knn_Algo(st.session_state.trainingData,3,distance)
+                Knn_Instance = Knn_Algo(st.session_state.trainingData[:200],3,distance)
                 st.write("applying KNN algorithm with those parameters: {} **distance** , **neighbors** : {} ".format(distance,3))
                 if st.button(":rainbow[predict🔮]") :
                     with st.spinner("In progress..."):
-                        st.session_state.testData = Knn_Instance.predict(st.session_state.testData[:200])
+                        st.session_state.testData = Knn_Instance.predict(st.session_state.testData)
                         st.write(st.session_state.testData)
+                
                 st.write(":red[**Experimentation**]👨‍🔬 :")
                 st.write("we wiil use two differentes methods to evaluate our model : **Matrix Confusion** and **Cross Validation**" + "/n"+
                         "you can choose on of them here:")
                 if st.button("Model selection and evaluation for KNN"):
-                    X_train,X_test= train_test_split(st.session_state.trainingData,test_size=1/3)
+                    X_train,X_test= train_test_split(st.session_state.trainingData[:200],test_size=1/3)
                     Bayes_Test = Knn_Algo(X_train,3,distance)
-                    testData= Bayes_Test.predict(X_test)
-                    accuracy = Bayes_Test.accuracy_knn(testData.pred_target, X_test.target)
+                    testData = Bayes_Test.predict(X_test)
                     class_labels = ["Negative", "Neutral", "Positive"]
                     conf_matrix  = confusion_matrix(pd.to_numeric(X_test["target"].tolist()),pd.to_numeric(testData["pred_target"]).tolist())
                     # Display the confusion matrix using ConfusionMatrixDisplay
@@ -175,10 +174,9 @@ class Application:
                     tab1, tab2 = st.tabs(["Cross validation", "K-fold"])
                     with tab1:
                         st.plotly_chart(fig)
-                        st.write(f"Exactitude de notre modèle KNN : {accuracy:.2%}")
                     with tab2:
                         kfold = Cross_Validation()
-                        kfold.k_fold(Knn_Instance,st.session_state.trainingData,5)
+                        kfold.k_fold(Knn_Instance,st.session_state.trainingData[:200],5)
                         
 
         with self.Bayes_Algo:
@@ -204,11 +202,11 @@ class Application:
                         with st.spinner("In progress...⏳"):
                             st.session_state.testData = Bayes_Instance.predict(st.session_state.testData)
                             st.write(st.session_state.testData)
+
                 if st.button("Model selection and evaluation for Bayes"):
                     X_train_bayes,X_test_bayes= train_test_split(st.session_state.trainingData,test_size=1/3)
                     Bayes_Test = Bayes(X_train_bayes,option,checkbox1,checkbox2)
                     Xb_pred = Bayes_Test.predict(X_test_bayes)                    
-                    Bayes_accuracy = Bayes_Test.accuracy_Bayes(X_test_bayes.pred_target, Xb_pred.target)
                     class_labels = ["Negative", "Neutral", "Positive"]
                     conf_matrix  = confusion_matrix(pd.to_numeric(X_test_bayes["target"].tolist()),pd.to_numeric(Xb_pred["pred_target"]).tolist())
                     # Display the confusion matrix using ConfusionMatrixDisplay
@@ -222,10 +220,9 @@ class Application:
                     tab1, tab2 = st.tabs(["Cross validation", "K-fold"])
                     with tab1:
                         st.plotly_chart(fig)
-                        st.write(f"Exactitude de notre modèle KNN : {Bayes_accuracy:.2%}")
                     with tab2:
                         kfold = Cross_Validation()
-                        kfold.k_fold(Bayes_Instance,st.session_state.trainingData,5)
+                        kfold.k_fold(Bayes_Instance,st.session_state.trainingData[:1000],5)
                         
 
 

@@ -19,7 +19,8 @@ class Dictionnary:
         countNegativeWord = 0
         dataFrame['pred_target'] = -1
             
-        for i, tweet in enumerate(dataFrame['text']):
+        for i in dataFrame['text'].index:
+            tweet = dataFrame.at[i,"text"]
             res = tweet.split(' ')
             for word in res:
                 if word in filePositive:
