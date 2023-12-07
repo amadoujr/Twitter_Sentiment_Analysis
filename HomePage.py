@@ -29,12 +29,29 @@ class Application:
         self.CleanData, self.Dico_Algo, self.KNN_Algo,self.Bayes_Algo = st.tabs(["Process Data", "Dictionnary Classification", "KNN Classification","Bayes Classification"])
 
 
+    def detect_delimiter(self,file_content):
+        comma = 0
+        semCol = 0
+        for word in file_content :
+            if word == ",":
+                comma+=1
+            if word == ";":
+                semCol +=1
+        return ";" if semCol > comma else ","
+
+
     def uploadFile(self,fileName):
         df1 = st.file_uploader("**upload csv file for " + fileName +" : ")
         if df1 is not None and fileName == "training" :
-            st.session_state.trainingData = pd.read_csv(df1)
+            with open(df1.name) as file:
+                first_line = file.readline()
+                delimiter = self.detect_delimiter(first_line)
+            st.session_state.trainingData = pd.read_csv(df1,sep=delimiter)
         if df1 is not None and fileName == "testing":
-            st.session_state.testData  = pd.read_csv(df1)
+            with open(df1.name) as file:
+                first_line = file.readline()
+                delimiter = self.detect_delimiter(first_line)
+            st.session_state.testData = pd.read_csv(df1,sep=delimiter)
 
     def cleanDataFrame(self, dataFrame):
         oldColumns = dataFrame.columns
@@ -89,18 +106,12 @@ class Application:
                 self.cleanDataFrame( st.session_state.trainingData)
                 self.cleanDataFrame( st.session_state.testData)
                 st.subheader(':red[Training file]')
-                col1,col2 = st.columns(2)
-                col1.write('**:orange[original data for the]👇**')
-                col1.write( st.session_state.trainingData.head())
-                col2.write('**:orange[cleaned data ]👇** 🧹')
-                col2.write(st.session_state.trainingData.head())
+                st.write('**:orange[cleaned data ]👇** 🧹')
+                st.write(st.session_state.trainingData.head())
                 st.divider()  # 👈 Draws a horizontal rule
                 st.subheader(':red[test file]')
-                col3,col4 = st.columns(2)
-                col3.write('**:orange[original data]👇**')
-                col3.write( st.session_state.testData.head())
-                col4.write('**:orange[cleaned data ]👇** 🧹')
-                col4.write(st.session_state.testData.head())
+                st.write('**:orange[cleaned data ]👇** 🧹')
+                st.write(st.session_state.testData.head())
                 st.info(" :red[NB:] We just decide to drop ['Ids','date','flag','user'] columns because they doesn't serve here." )
 
         with self.Dico_Algo:
