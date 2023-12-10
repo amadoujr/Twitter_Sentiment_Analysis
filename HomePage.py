@@ -54,13 +54,15 @@ class Application:
             st.session_state.testData = pd.read_csv(df1,sep=delimiter)
 
     def cleanDataFrame(self, dataFrame):
+        df = dataFrame.copy()
         oldColumns = dataFrame.columns
-        dataFrame.columns = ['target', 'Ids', 'date', 'flag', 'user', 'text']
-        dataFrame.loc[len(dataFrame.index)] = oldColumns
+        df.columns = ['target', 'Ids', 'date', 'flag', 'user', 'text']
+        df.loc[len(dataFrame.index)] = oldColumns
         columns_to_drop = ['Ids','date','flag','user']
-        dataFrame.drop(columns_to_drop,axis=1,inplace = True)
-        dataFrame.drop_duplicates(subset=['text'], inplace=True)
-        self.processCleaning(dataFrame)
+        df.drop(columns_to_drop,axis=1,inplace = True)
+        df.drop_duplicates(subset=['text'], inplace=True)
+        self.processCleaning(df)
+        return df
     
     def removeSpecialCaractere(self,text):
         indice = 1
@@ -103,15 +105,23 @@ class Application:
             self.uploadFile('testing')
             st.button('Click here to clean these two files :🗑 ', on_click=self.click_button)
             if st.session_state.clicked and st.session_state.trainingData is not None and st.session_state.testData is not None :
-                self.cleanDataFrame( st.session_state.trainingData)
-                self.cleanDataFrame( st.session_state.testData)
+                initTrainFile = st.session_state.trainingData
+                initTestFile = st.session_state.testData
+                st.session_state.trainingData = self.cleanDataFrame( st.session_state.trainingData)
+                st.session_state.testData = self.cleanDataFrame( st.session_state.testData)
                 st.subheader(':red[Training file]')
-                st.write('**:orange[cleaned data ]👇** 🧹')
-                st.write(st.session_state.trainingData.head())
+                col1,col2 = st.columns(2)
+                col1.write('**:orange[Original data ]👇**')
+                col1.write(initTrainFile.head())
+                col2.write('**:orange[cleaned data ]👇** 🧹')
+                col2.write(st.session_state.trainingData.head())
                 st.divider()  # 👈 Draws a horizontal rule
                 st.subheader(':red[test file]')
-                st.write('**:orange[cleaned data ]👇** 🧹')
-                st.write(st.session_state.testData.head())
+                col3,col4 = st.columns(2)
+                col3.write('**:orange[Original data ]👇**')
+                col3.write(initTestFile.head())
+                col4.write('**:orange[cleaned data ]👇** 🧹')
+                col4.write(st.session_state.testData.head())
                 st.info(" :red[NB:] We just decide to drop ['Ids','date','flag','user'] columns because they doesn't serve here." )
 
         with self.Dico_Algo:
