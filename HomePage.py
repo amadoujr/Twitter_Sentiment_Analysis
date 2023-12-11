@@ -191,7 +191,7 @@ class Application:
                         labels=dict(x="Predicted", y="Actual"),
                         color_continuous_scale="Blues"
                     )
-                    tab1, tab2 = st.tabs(["Cross validation", "K-fold"])
+                    tab1, tab2 = st.tabs(["Confusion matrix", "K-fold"])
                     with tab1:
                         st.plotly_chart(fig)
                     with tab2:
@@ -242,7 +242,7 @@ class Application:
                         labels=dict(x="Predicted", y="Actual"),
                         color_continuous_scale="Blues"
                     )
-                    tab1, tab2 = st.tabs(["Cross validation", "K-fold"])
+                    tab1, tab2 = st.tabs(["Confusion matrix ", "K-fold"])
                     with tab1:
                         st.plotly_chart(fig)
                     with tab2:
