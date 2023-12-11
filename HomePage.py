@@ -146,6 +146,11 @@ class Application:
                             color_continuous_scale="Blues"
                         )
                         st.plotly_chart(fig)
+                        st.download_button(
+                            label="Download classfied DataFrame as CSV",
+                            data=st.session_state.testData.to_csv().encode('utf-8'),
+                            file_name='predicted_file.csv',
+                        )
                 
                         
         with self.KNN_Algo:
@@ -163,6 +168,11 @@ class Application:
                     with st.spinner("In progress..."):
                         st.session_state.testData = Knn_Instance.predict(st.session_state.testData)
                         st.write(st.session_state.testData)
+                        st.download_button(
+                            label="Download classfied DataFrame as CSV",
+                            data=st.session_state.testData.to_csv().encode('utf-8'),
+                            file_name='predicted_file.csv',
+                        )
                 
                 st.write(":red[**Experimentation**]👨‍🔬 :")
                 st.write("we wiil use two differentes methods to evaluate our model : **Matrix Confusion** and **Cross Validation**" + "/n"+
@@ -212,6 +222,11 @@ class Application:
                         with st.spinner("In progress...⏳"):
                             st.session_state.testData = Bayes_Instance.predict(st.session_state.testData)
                             st.write(st.session_state.testData)
+                            st.download_button(
+                            label="Download classfied DataFrame as CSV",
+                            data=st.session_state.testData.to_csv().encode('utf-8'),
+                            file_name='predicted_file.csv',
+                        )
 
                 if st.button("Model selection and evaluation for Bayes"):
                     X_train_bayes,X_test_bayes= train_test_split(st.session_state.trainingData,test_size=1/3)
